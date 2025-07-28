@@ -1,20 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Code, Palette, Zap, Users, Star, ArrowRight, Menu, X, Globe, Smartphone, Search, TrendingUp, MessageCircle, Mail, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronRight, Code, Phone, Palette, Zap, Users, Star, ArrowRight, Menu, X, Globe, Smartphone, Search, TrendingUp, MessageCircle, Mail, ChevronLeft } from 'lucide-react';
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showContactModal, setShowContactModal] = useState(false);
-
+  const [modalHeader, setModalHeader] = useState("Start Your Project");
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const backgroundRef = useRef(null);
+  
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
+    
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
-
+  
+  useEffect(() => {
+    if (backgroundRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      backgroundRef.current.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      const shapes = [];
+      
+      // Create random shapes
+      for (let i = 0; i < 15; i++) {
+        shapes.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 100 + 50,
+          color: `rgba(255, 215, 0, ${Math.random() * 0.05 + 0.01})`,
+          type: Math.random() > 0.5 ? 'circle' : 'rect',
+          width: Math.random() * 150 + 50,
+          height: Math.random() * 150 + 50
+        });
+      }
+      
+      const drawShapes = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        shapes.forEach(shape => {
+          ctx.fillStyle = shape.color;
+          
+          if (shape.type === 'circle') {
+            ctx.beginPath();
+            ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+          }
+        });
+      };
+      
+      drawShapes();
+      
+      const handleResize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        drawShapes();
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+  
   const services = [
     {
       icon: <Globe className="w-8 h-8" />,
@@ -41,14 +98,14 @@ const App = () => {
       features: ["Payment Integration", "Inventory Management", "Order Processing", "Customer Analytics"]
     }
   ];
-
+  
   const testimonials = [
     {
       name: "Sarah Johnson",
       role: "CEO, TechStart Inc.",
       content: "Absolutely exceptional work! Our website conversion rate increased by 340% after the redesign. The attention to detail and technical expertise is unmatched.",
       rating: 5,
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face"
+      image: "https://media.istockphoto.com/id/1313668225/photo/portrait-of-beautiful-woman-lit-by-neon-colored-lights.webp?a=1&b=1&s=612x612&w=0&k=20&c=k1bJSUUS4gCjLEu4-XRcxj3ktptNbtLxmNlpS5zFHeY="
     },
     {
       name: "Michael Chen",
@@ -65,26 +122,78 @@ const App = () => {
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face"
     }
   ];
-
-  const nextTestimonial = () => {
-    setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
-
-  const prevTestimonial = () => {
-    setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
-
+  
   const stats = [
     { number: "150+", label: "Projects Completed" },
     { number: "98%", label: "Client Satisfaction" },
     { number: "24/7", label: "Support Available" },
     { number: "5★", label: "Average Rating" }
   ];
-
+  
+  const nextTestimonial = () => {
+    setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+  };
+  
+  const prevTestimonial = () => {
+    setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+  
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Reset states
+    setFormError(null);
+    
+    // Get form data
+    const formData = {
+      name: e.target.name.value,
+      email: e.target.email.value,
+      message: e.target.message.value
+    };
+    
+    // Simple validation
+    if (!formData.name || !formData.email || !formData.message) {
+      setFormError("Please fill in all fields");
+      return;
+    }
+    
+    try {
+      // Using FormSubmit.co for form handling
+      const response = await fetch('https://formsubmit.co/cokorie158@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.ok) {
+        setFormSubmitted(true);
+        e.target.reset();
+      } else {
+        setFormError("Failed to send message. Please try again.");
+      }
+    } catch (error) {
+      setFormError("Network error. Please try again.");
+    }
+  };
+  
+  const openContactModal = (header) => {
+    setModalHeader(header);
+    setShowContactModal(true);
+  };
+  
+  const closeContactModal = () => {
+    setShowContactModal(false);
+    setFormError(null);
+    setFormSubmitted(false);
+  };
+  
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {/* Interactive Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div 
           className="absolute w-96 h-96 rounded-full opacity-10"
           style={{
@@ -95,8 +204,96 @@ const App = () => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-yellow-300/5" />
+        <div ref={backgroundRef} className="absolute inset-0" />
+      </div>
+      
+    {showContactModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+    <div className="relative bg-black border-2 border-yellow-400/50 rounded-3xl p-8 max-w-lg w-full shadow-2xl shadow-yellow-400/20 animate-in fade-in-0 zoom-in-95 duration-300">
+      {/* Close Button */}
+      <button 
+        onClick={closeContactModal}
+        className="absolute top-6 right-6 text-yellow-400 hover:text-yellow-300 hover:rotate-90 transition-all duration-300 group"
+      >
+        <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+      </button>
+
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full mb-4 shadow-lg shadow-yellow-400/30">
+          <Phone className="w-8 h-8 text-black" />
+        </div>
+        <h3 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 bg-clip-text text-transparent mb-2">
+          {modalHeader}
+        </h3>
+        <p className="text-yellow-400 text-lg">
+          Let's discuss your next project
+        </p>
       </div>
 
+      {/* Contact Options */}
+      <div className="space-y-4">
+        {/* WhatsApp Button */}
+        <button
+          onClick={() => {
+            const message = encodeURIComponent("Hi! I'd like to discuss a project with you.");
+            window.open(`https://wa.me/23407034941078?text=${message}`, '_blank');
+          }}
+          className="group w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-black p-6 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-yellow-400/30 flex items-center justify-between"
+        >
+          <div className="flex items-center">
+            <div className="bg-black/20 p-3 rounded-xl mr-4 group-hover:bg-black/30 transition-colors">
+              <MessageCircle className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+              <div className="font-bold text-lg">WhatsApp</div>
+              <div className="text-black/70 text-sm">07034941078</div>
+            </div>
+          </div>
+          <div className="text-black/60 group-hover:text-black group-hover:translate-x-1 transition-all">
+            →
+          </div>
+        </button>
+
+        {/* Email Button */}
+        <button
+          onClick={() => {
+            window.open(`mailto:cokorie158@gmail.com?subject=Project Inquiry&body=Hi! I'd like to discuss a project with you.`, '_blank');
+          }}
+          className="group w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-black p-6 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-yellow-400/30 flex items-center justify-between"
+        >
+          <div className="flex items-center">
+            <div className="bg-black/20 p-3 rounded-xl mr-4 group-hover:bg-black/30 transition-colors">
+              <Mail className="w-6 h-6" />
+            </div>
+            <div className="text-left">
+              <div className="font-bold text-lg">Email</div>
+              <div className="text-black/70 text-sm">cokorie158@gmail.com</div>
+            </div>
+          </div>
+          <div className="text-black/60 group-hover:text-black group-hover:translate-x-1 transition-all">
+            →
+          </div>
+        </button>
+      </div>
+
+      {/* Footer Message */}
+      <div className="mt-8 text-center">
+        <p className="text-yellow-400 text-sm leading-relaxed">
+          Available for freelance projects and collaborations.<br />
+          <span className="text-yellow-300 font-medium">Response within 24 hours</span>
+        </p>
+      </div>
+
+      {/* Decorative Elements */}
+      <div className="absolute -top-2 -left-2 w-6 h-6 border-l-2 border-t-2 border-yellow-400/40 rounded-tl-lg"></div>
+      <div className="absolute -top-2 -right-2 w-6 h-6 border-r-2 border-t-2 border-yellow-400/40 rounded-tr-lg"></div>
+      <div className="absolute -bottom-2 -left-2 w-6 h-6 border-l-2 border-b-2 border-yellow-400/40 rounded-bl-lg"></div>
+      <div className="absolute -bottom-2 -right-2 w-6 h-6 border-r-2 border-b-2 border-yellow-400/40 rounded-br-lg"></div>
+    </div>
+  </div>
+)}
+      
       {/* Navigation */}
       <nav className="relative z-50 px-6 py-4 bg-black/80 backdrop-blur-md border-b border-yellow-500/20">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -116,7 +313,6 @@ const App = () => {
               </a>
             ))}
           </div>
-
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden text-white"
@@ -124,7 +320,6 @@ const App = () => {
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-md border-b border-yellow-500/20 p-6">
@@ -136,7 +331,7 @@ const App = () => {
           </div>
         )}
       </nav>
-
+      
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
@@ -160,17 +355,15 @@ const App = () => {
                 and your bank account happy. Your success story starts here.
               </p>
             </div>
-
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
-                onClick={() => setShowContactModal(true)}
+                onClick={() => openContactModal("Start Your Project")}
                 className="group bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-lg font-semibold hover:shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300 flex items-center justify-center"
               >
                 Start Your Project
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
             </div>
-
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8">
               {stats.map((stat, index) => (
@@ -181,7 +374,6 @@ const App = () => {
               ))}
             </div>
           </div>
-
           <div className="relative">
             <div className="relative z-10">
               <img 
@@ -194,7 +386,7 @@ const App = () => {
           </div>
         </div>
       </section>
-
+      
       {/* Services Section */}
       <section id="services" className="relative py-20 px-6">
         <div className="max-w-7xl mx-auto">
@@ -208,7 +400,6 @@ const App = () => {
               Comprehensive web development solutions designed to elevate your business and deliver exceptional results
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
               <div 
@@ -230,16 +421,15 @@ const App = () => {
                     </li>
                   ))}
                 </ul>
-
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/5 to-yellow-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
             ))}
           </div>
         </div>
       </section>
-
+      
       {/* Portfolio Showcase */}
-      <section id="portfolio" className="relative py-20 px-6 bg-gradient-to-br from-gray-900/50 to-black/50">
+      <section id="portfolio" className="relative py-20 px-6  bg-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold mb-6">
@@ -251,7 +441,6 @@ const App = () => {
               Discover how we've transformed businesses with innovative web solutions
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
@@ -301,7 +490,77 @@ const App = () => {
           </div>
         </div>
       </section>
-
+      
+      {/* About Section */}
+      <section id="about" className="relative py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-white to-yellow-400 bg-clip-text text-transparent">
+                About Me
+              </span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Passionate web developer dedicated to creating exceptional digital experiences
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="relative">
+              <img 
+                src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&h=600&fit=crop" 
+                alt="Developer at work"
+                className="rounded-2xl shadow-2xl shadow-yellow-500/20"
+              />
+              <div className="absolute -inset-4 bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 rounded-2xl blur-xl" />
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-white">Crafting Digital Excellence</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  With over 8 years of experience in web development, I've helped businesses of all sizes transform their online presence and drive measurable results. My expertise spans across frontend and backend technologies, with a focus on creating fast, secure, and user-friendly websites.
+                </p>
+                <p className="text-gray-300 leading-relaxed">
+                  I specialize in React-based applications, e-commerce solutions, and custom web platforms that not only look stunning but also perform flawlessly. My approach combines technical expertise with a deep understanding of user experience and business objectives.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="text-xl font-semibold text-yellow-400">My Expertise</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Code className="w-5 h-5 text-yellow-400" />
+                    <span className="text-gray-300">Frontend Development</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Palette className="w-5 h-5 text-yellow-400" />
+                    <span className="text-gray-300">UI/UX Design</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-5 h-5 text-yellow-400" />
+                    <span className="text-gray-300">SEO Optimization</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Zap className="w-5 h-5 text-yellow-400" />
+                    <span className="text-gray-300">Performance Tuning</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4">
+                <button 
+                  onClick={() => openContactModal("View My Resume")}
+                  className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-lg font-semibold hover:shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300 flex items-center justify-center"
+                >
+                  View My Resume
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* Testimonials */}
       <section id="testimonials" className="relative py-20 px-6">
         <div className="max-w-7xl mx-auto">
@@ -312,7 +571,6 @@ const App = () => {
               </span>
             </h2>
           </div>
-
           <div className="relative max-w-4xl mx-auto">
             {/* Left Arrow */}
             <button
@@ -321,7 +579,6 @@ const App = () => {
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
-
             {/* Right Arrow */}
             <button
               onClick={nextTestimonial}
@@ -329,7 +586,6 @@ const App = () => {
             >
               <ChevronRight className="w-6 h-6" />
             </button>
-
             <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-500/20 rounded-2xl p-8 lg:p-12 transition-all duration-500">
               <div className="flex items-center mb-6">
                 <img 
@@ -352,7 +608,6 @@ const App = () => {
                 "{testimonials[activeTestimonial].content}"
               </blockquote>
             </div>
-
             <div className="flex justify-center space-x-2 mt-8">
               {testimonials.map((_, index) => (
                 <button
@@ -367,7 +622,157 @@ const App = () => {
           </div>
         </div>
       </section>
-
+      
+      {/* Contact Section */}
+      <section id="contact" className="relative py-20 px-6 bg-black/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-white to-yellow-400 bg-clip-text text-transparent">
+                Get In Touch
+              </span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Have a project in mind? Let's discuss how I can help you achieve your goals
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-white">Contact Information</h3>
+                <p className="text-gray-300">
+                  Feel free to reach out through any of the channels below. I typically respond within 24 hours.
+                </p>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">Email</h4>
+                    <a href="mailto:cokorie158@gmail.com" className="text-yellow-400 hover:text-yellow-300 transition-colors duration-300">
+                      cokorie158@gmail.com
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">WhatsApp</h4>
+                    <a href="https://wa.me/2347034941078" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300 transition-colors duration-300">
+                      +234 703 494 1078
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">Location</h4>
+                    <p className="text-gray-300">
+                      Lagos, Nigeria
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4">
+                <button 
+                  onClick={() => openContactModal("Get Free Consultation")}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-lg font-semibold hover:shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300 flex items-center justify-center"
+                >
+                  Send Message
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-gray-900/50 to-black/50 border border-yellow-500/20 rounded-2xl p-8">
+              <h3 className="text-2xl font-bold text-white mb-6">{modalHeader}</h3>
+              
+              {formSubmitted ? (
+                <div className="bg-green-900/30 border border-green-500/30 rounded-lg p-6 text-center">
+                  <div className="text-green-400 text-4xl mb-4">✓</div>
+                  <h4 className="text-xl font-bold text-white mb-2">Message Sent Successfully!</h4>
+                  <p className="text-gray-300">
+                    Thank you for reaching out. I'll get back to you as soon as possible.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setFormSubmitted(false);
+                      closeContactModal();
+                    }}
+                    className="mt-4 bg-green-400 text-black px-6 py-2 rounded-lg font-semibold hover:bg-green-500 transition-colors"
+                  >
+                    Send Another Message
+                  </button>
+                </div>
+              ) : (
+                <form id="contactForm" onSubmit={handleFormSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="name" className="block text-gray-300 mb-2">Name</label>
+                    <input 
+                      type="text" 
+                      id="name" 
+                      name="name"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-400 focus:outline-none transition-colors duration-300"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="email" className="block text-gray-300 mb-2">Email</label>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      name="email"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-400 focus:outline-none transition-colors duration-300"
+                      placeholder="Your email address"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="message" className="block text-gray-300 mb-2">Message</label>
+                    <textarea 
+                      id="message" 
+                      name="message"
+                      rows={5}
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-yellow-400 focus:outline-none transition-colors duration-300"
+                      placeholder="Tell me about your project..."
+                      required
+                    ></textarea>
+                  </div>
+                  
+                  {formError && (
+                    <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-3 text-red-400">
+                      {formError}
+                    </div>
+                  )}
+                  
+                  <button 
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-8 py-4 rounded-lg font-semibold hover:shadow-2xl hover:shadow-yellow-500/25 transition-all duration-300 flex items-center justify-center"
+                  >
+                    Send Message
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* CTA Section */}
       <section className="relative py-20 px-6 bg-gradient-to-r from-yellow-400 to-yellow-600">
         <div className="max-w-4xl mx-auto text-center text-black">
@@ -380,65 +785,16 @@ const App = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => setShowContactModal(true)}
-              className="bg-black text-white px-8 py-4 rounded-lg font-semibold hover:bg-gray-900 transition-all duration-300 flex items-center justify-center"
+              onClick={() => openContactModal("Get Free Consultation")}
+              className="bg-black text-white px-8 py-4 rounded-lg font-semibold hover:bg-gray-900 transition-all duration-300"
             >
               Get Free Consultation
               <ArrowRight className="w-5 h-5 ml-2" />
             </button>
           </div>
         </div>
-
-        {/* Contact Modal */}
-        {showContactModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-            <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-500/30 rounded-2xl p-8 max-w-md w-full relative animate-in fade-in zoom-in duration-300 shadow-2xl shadow-yellow-500/20">
-              <button 
-                onClick={() => setShowContactModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors duration-300"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-6 h-6 text-black" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Let's Get Started!</h3>
-                <p className="text-gray-300">Choose your preferred way to connect with me</p>
-              </div>
-
-              <div className="space-y-4">
-                <a 
-                  href="https://wa.me/2347034941078?text=Hi! I'm interested in your web development services. Can we discuss my project?"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-black px-6 py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center group shadow-lg hover:shadow-yellow-500/25"
-                >
-                  <MessageCircle className="w-5 h-5 mr-3" />
-                  WhatsApp Me
-                  <span className="ml-2 text-sm opacity-90">07034941078</span>
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                </a>
-
-                <a 
-                  href="mailto:cokorie158@gmail.com?subject=Web Development Inquiry&body=Hi! I'm interested in your web development services. I'd like to discuss my project requirements."
-                  className="w-full border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black px-6 py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center group"
-                >
-                  <Mail className="w-5 h-5 mr-3" />
-                  Send Email
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                </a>
-              </div>
-
-              <p className="text-center text-sm text-gray-400 mt-6">
-                I typically respond within 30 minutes during business hours
-              </p>
-            </div>
-          </div>
-        )}
       </section>
-
+      
       {/* Footer */}
       <footer className="relative bg-black border-t border-yellow-500/20 py-12 px-6">
         <div className="max-w-7xl mx-auto">
@@ -496,5 +852,4 @@ const App = () => {
     </div>
   );
 };
-
 export default App;
